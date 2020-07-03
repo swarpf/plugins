@@ -1,0 +1,3 @@
+[submodule "swarpf-idl"]
+	path = swarpf-idl
+	url = https://github.com/swarpf/swarpf-idl.git
