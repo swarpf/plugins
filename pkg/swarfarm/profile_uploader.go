@@ -88,7 +88,7 @@ func UploadSwarfarmProfile(wizardId int64, command, apiResponse string) error {
 				} else if resp.StatusCode() == http.StatusOK {
 					content := map[string]interface{}{}
 					err = json.Unmarshal(resp.Body(), &content)
-					if err == nil {
+					if err != nil {
 						if content["status"].(string) == "SUCCESS" {
 							log.Info().
 								Str("jobId", jobId).
