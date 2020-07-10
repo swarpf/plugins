@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -147,6 +148,7 @@ func FetchAcceptedLoggerCommands() map[string]map[string][]string {
 	for k := range acceptedCommandCache {
 		keys = append(keys, k)
 	}
+	sort.Strings(keys)
 
 	log.Info().Strs("accepted_commands", keys).
 		Msg("Successfully retrieded list of SWARFARM accepted commands")

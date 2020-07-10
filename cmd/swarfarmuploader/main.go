@@ -70,7 +70,8 @@ func main() {
 	s := grpc.NewServer()
 	pb.RegisterProxyApiConsumerServer(s, &swarfarm.ProxyApiConsumer{})
 
-	go proxyapiutil.RegisterWithProxyApi(proxyAddress, listenAddress, swarfarm.SubscribedCommands())
+	subscribedCommands := swarfarm.SubscribedCommands()
+	go proxyapiutil.RegisterWithProxyApi(proxyAddress, listenAddress, subscribedCommands)
 
 	go func() {
 		if err := s.Serve(lis); err != nil {
@@ -85,7 +86,7 @@ func main() {
 	// Waiting for SIGINT (pkill -2)
 	<-stop
 
-	proxyapiutil.DisconnectFromProxyApi(proxyAddress, listenAddress, swarfarm.SubscribedCommands())
+	proxyapiutil.DisconnectFromProxyApi(proxyAddress, listenAddress, subscribedCommands)
 
 	log.Info().Err(err).Msg("SWARFARM uploader plugin ended")
 }
