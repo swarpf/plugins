@@ -105,7 +105,7 @@ func FetchAcceptedLoggerCommands() map[string]map[string][]string {
 		return acceptedCommandCache
 	}
 
-	acceptedCommandCache := make(map[string]map[string][]string)
+	acceptedCommandCache = make(map[string]map[string][]string)
 
 	rclient := resty.New()
 	resp, err := rclient.R().Get(baseUrl + "/data/log/accepted_commands/")

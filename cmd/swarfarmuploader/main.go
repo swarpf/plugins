@@ -82,6 +82,7 @@ func main() {
 	// Setting up signal capturing
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, os.Interrupt)
+	signal.Notify(stop, os.Kill)
 
 	// Waiting for SIGINT (pkill -2)
 	<-stop
