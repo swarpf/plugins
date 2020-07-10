@@ -1,0 +1,53 @@
+name: docker-buildx
+
+on:
+  pull_request:
+    branches: master
+  push:
+    branches: master
+    tags:
+
+jobs:
+  buildx-plugins:
+    strategy:
+      fail-fast: false
+      matrix:
+        plugin: [ debugout, profileexport, swaglogger, swarfarmuploader ]
+
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+        with:
+          submodules: recursive
+
+      - name: Set up Docker Buildx
+        id: buildx
+        uses: crazy-max/ghaction-docker-buildx@v3
+
+      - name: Print available platforms
+        run: echo ${{ steps.buildx.outputs.platforms }}
+
+      - name: Docker Login
+        if: success() && github.event_name != 'pull_request'
+        uses: azure/docker-login@v1
+        with:
+          username: ${{ secrets.DOCKER_USER }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      # Publish the plugin image
+      - name: Docker Buildx (build and push) - Plugin ${{ matrix.plugin }}
+        if: success() && github.event_name != 'pull_request'
+        run: |
+          docker buildx create --use --name build --node build
+          docker buildx build \
+            --build-arg PLUGINNAME=${{ matrix.plugin }} \
+            --platform linux/amd64,linux/arm64,linux/386,linux/arm/v7,linux/arm/v6 \
+            --push \
+            --tag swarpf/plugin_${{ matrix.plugin }}:latest \
+            --file ./Dockerfile .
+
+      - name: Docker Check Manifest
+        if: always() && github.event_name != 'pull_request'
+        run: |
+          docker run --rm mplatform/mquery swarpf/plugin_${{ matrix.plugin }}:latest
