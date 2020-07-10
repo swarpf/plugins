@@ -74,12 +74,12 @@ func OnReceiveApiEvent(command, _, response string) error {
 	}
 
 	wizardInfo := responseContent["wizard_info"].(map[string]interface{})
-	wizardId := wizardInfo["wizard_id"].(float64)
+	wizardId := int64(wizardInfo["wizard_id"].(float64))
 	wizardName := wizardInfo["wizard_name"].(string)
 
 	log.Info().
 		Str("command", command).
-		Float64("wizardId", wizardId).
+		Int64("wizardId", wizardId).
 		Str("wizardName", wizardName).
 		Msg("Received command used in profile export")
 
@@ -97,7 +97,7 @@ func OnReceiveApiEvent(command, _, response string) error {
 	jsonBytes, err := json.Marshal(sortedData)
 	if err != nil {
 		log.Error().Err(err).
-			Float64("wizardId", wizardId).
+			Int64("wizardId", wizardId).
 			Msg("Something went wrong while re-serializing the API response.")
 		return errors.New("serialization failed - sorted data is corrupt")
 	}
@@ -107,14 +107,14 @@ func OnReceiveApiEvent(command, _, response string) error {
 	err = ioutil.WriteFile(filePath, jsonBytes, 0664)
 	if err != nil {
 		log.Error().Err(err).
-			Float64("wizardId", wizardId).
+			Int64("wizardId", wizardId).
 			Str("filePath", filePath).
 			Msg("Could not write profile JSON to file")
 		return fmt.Errorf("failed to write profile to file, error: %v", err.Error())
 	}
 
 	log.Info().
-		Float64("wizardId", wizardId).
+		Int64("wizardId", wizardId).
 		Str("filePath", filePath).
 		Msgf("Profile successfully exported to %s", filePath)
 
