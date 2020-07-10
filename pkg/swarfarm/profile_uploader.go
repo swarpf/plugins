@@ -67,7 +67,7 @@ func UploadSwarfarmProfile(wizardId int64, command, apiResponse string) error {
 
 		// run job check routine
 		go func(jobId string, apiKey string) {
-			const maxRetires = 3
+			const maxRetires = 5
 			client := makeAuthorizedClient(apiKey)
 
 			for retries := 0; retries < maxRetires; retries++ {
@@ -102,7 +102,7 @@ func UploadSwarfarmProfile(wizardId int64, command, apiResponse string) error {
 						Msg("Error while deserializing SWARFARM profile upload check response")
 				}
 
-				time.Sleep(10 * time.Second)
+				time.Sleep(20 * time.Second)
 			}
 
 			log.Error().
