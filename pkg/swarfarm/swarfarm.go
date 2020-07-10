@@ -31,13 +31,13 @@ func OnReceiveApiEvent(command, request, response string) error {
 		log.Error().Err(err).Msg("Failed to deserializie SWARFARM response")
 		return errors.New("error while deserializing SWARFARM response")
 	}
-
-	wizardInfo := requestContent["wizard_info"].(map[string]interface{})
-	wizardId := int64(wizardInfo["wizard_id"].(float64))
-
+	
 	if isProfileUploadCommand(command) {
+		wizardInfo := responseContent["wizard_info"].(map[string]interface{})
+		wizardId := int64(wizardInfo["wizard_id"].(float64))
 		return UploadSwarfarmProfile(wizardId, command, response)
 	} else if isCommandLoggerCommand(command) {
+		wizardId := int64(requestContent["wizard_id"].(float64))
 		return UploadSwarfarmCommand(wizardId, command, requestContent, responseContent)
 	}
 
