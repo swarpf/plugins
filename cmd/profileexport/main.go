@@ -19,8 +19,8 @@ import (
 
 func main() {
 	// load configuration from command line or environment
-	pflag.String("proxyapi_addr", "127.0.0.1:8010", "Address of the proxy host")
-	pflag.String("listen_addr", "127.0.0.1:11102", "Listen address for the plugin")
+	pflag.String("proxyapi_addr", "127.0.0.1:11100", "Address of the proxy host")
+	pflag.String("listen_addr", "0.0.0.0:11102", "Listen address for the plugin")
 	pflag.String("output_directory", "./export", "Output directory for the profile files")
 	pflag.Bool("development", false, "Enable development logging")
 	pflag.Parse()
