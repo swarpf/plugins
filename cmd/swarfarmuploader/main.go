@@ -22,9 +22,8 @@ func main() {
 	pflag.String("proxyapi_addr", "127.0.0.1:11100", "Address of the proxy host")
 	pflag.String("listen_addr", "0.0.0.0:11103", "Listen address for the plugin")
 	pflag.Bool("development", false, "Enable development logging")
-	pflag.Parse()
-
 	pflag.StringToString("api_tokens", map[string]string{}, "List of API tokens for SWARFARM. Format: 'wizardId=Token,...'")
+	pflag.Parse()
 
 	viper.SetEnvPrefix("plugin_swarfarmuploader")
 	viper.AutomaticEnv()
