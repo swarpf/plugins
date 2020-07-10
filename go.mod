@@ -8,7 +8,8 @@ require (
 	github.com/rs/zerolog v1.19.0
 	github.com/spf13/pflag v1.0.3
 	github.com/spf13/viper v1.7.0
+	github.com/thecodeteam/goodbye v0.0.0-20170927022442-a83968bda2d3
 	google.golang.org/grpc v1.30.0
-	google.golang.org/protobuf v1.23.0
 	google.golang.org/grpc/cmd/protoc-gen-go-grpc v0.0.0-20200617041141-9a465503579e // indirect
+	google.golang.org/protobuf v1.23.0
 )

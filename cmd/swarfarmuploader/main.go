@@ -1,15 +1,16 @@
 package main
 
 import (
+	"context"
 	"net"
 	"os"
-	"os/signal"
 	"time"
 
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
+	"github.com/thecodeteam/goodbye"
 	"google.golang.org/grpc"
 
 	"github.com/swarpf/plugins/internal/proxyapiutil"
@@ -56,6 +57,18 @@ func main() {
 		Str("proxyAddr", proxyAddress).
 		Msgf("Connecting SWARFARM uploader plugin to proxy %s", proxyAddress)
 
+	// Create a context to use with the Goodbye library's functions.
+	ctx := context.Background()
+	defer goodbye.Exit(ctx, -1)
+	goodbye.Notify(ctx)
+
+	subscribedCommands := swarfarm.SubscribedCommands()
+	goodbye.RegisterWithPriority(func(ctx context.Context, sig os.Signal) {
+		proxyapiutil.DisconnectFromProxyApi(proxyAddress, listenAddress, subscribedCommands)
+
+		log.Info().Err(err).Msg("SWARFARM uploader plugin ended")
+	}, -1)
+
 	// initialize proxy consumer
 	lis, err := net.Listen("tcp", listenAddress)
 	if err != nil {
@@ -69,24 +82,9 @@ func main() {
 	s := grpc.NewServer()
 	pb.RegisterProxyApiConsumerServer(s, &swarfarm.ProxyApiConsumer{})
 
-	subscribedCommands := swarfarm.SubscribedCommands()
 	go proxyapiutil.RegisterWithProxyApi(proxyAddress, listenAddress, subscribedCommands)
 
-	go func() {
-		if err := s.Serve(lis); err != nil {
-			log.Info().Str("reason", err.Error()).Msg("Server stopped listening")
-		}
-	}()
-
-	// Setting up signal capturing
-	stop := make(chan os.Signal, 1)
-	signal.Notify(stop, os.Interrupt)
-	signal.Notify(stop, os.Kill)
-
-	// Waiting for SIGINT (pkill -2)
-	<-stop
-
-	proxyapiutil.DisconnectFromProxyApi(proxyAddress, listenAddress, subscribedCommands)
-
-	log.Info().Err(err).Msg("SWARFARM uploader plugin ended")
+	if err := s.Serve(lis); err != nil {
+		log.Info().Str("reason", err.Error()).Msg("Server stopped listening")
+	}
 }
