@@ -1,15 +1,16 @@
 package main
 
 import (
+	"context"
 	"net"
 	"os"
-	"os/signal"
 	"time"
 
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
+	"github.com/thecodeteam/goodbye"
 	"google.golang.org/grpc"
 
 	"github.com/swarpf/plugins/internal/proxyapiutil"
@@ -44,6 +45,18 @@ func main() {
 	}
 	log.Logger = log.With().Timestamp().Str("log_type", "plugin").Str("plugin", "Profile Exporter").Logger()
 
+	// setup exit routine
+	ctx := context.Background()
+	defer goodbye.Exit(ctx, 0)
+	goodbye.Notify(ctx)
+
+	subscribedCommands := profileexport.SubscribedCommands()
+	goodbye.RegisterWithPriority(func(ctx context.Context, sig os.Signal) {
+		proxyapiutil.DisconnectFromProxyApi(proxyAddress, listenAddress, subscribedCommands)
+
+		log.Info().Err(err).Msg("Profile Exporter plugin ended")
+	}, -1)
+
 	// Main Program
 	log.Info().
 		Str("proxyAddr", proxyAddress).
@@ -65,22 +78,9 @@ func main() {
 	s := grpc.NewServer()
 	pb.RegisterProxyApiConsumerServer(s, &profileexport.ProxyApiConsumer{})
 
-	go proxyapiutil.RegisterWithProxyApi(proxyAddress, listenAddress, profileexport.SubscribedCommands())
+	go proxyapiutil.RegisterWithProxyApi(proxyAddress, listenAddress, subscribedCommands)
 
-	go func() {
-		if err := s.Serve(lis); err != nil {
-			log.Info().Str("reason", err.Error()).Msg("Server stopped listening")
-		}
-	}()
-
-	// Setting up signal capturing
-	stop := make(chan os.Signal, 1)
-	signal.Notify(stop, os.Interrupt)
-
-	// Waiting for SIGINT (pkill -2)
-	<-stop
-
-	proxyapiutil.DisconnectFromProxyApi(proxyAddress, listenAddress, profileexport.SubscribedCommands())
-
-	log.Info().Err(err).Msg("Profile Exporter plugin ended")
+	if err := s.Serve(lis); err != nil {
+		log.Info().Str("reason", err.Error()).Msg("Server stopped listening")
+	}
 }

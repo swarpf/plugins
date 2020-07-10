@@ -52,14 +52,9 @@ func main() {
 		swarfarm.AddProfile(wizardId, token)
 	}
 
-	// Main Program
-	log.Info().
-		Str("proxyAddr", proxyAddress).
-		Msgf("Connecting SWARFARM uploader plugin to proxy %s", proxyAddress)
-
-	// Create a context to use with the Goodbye library's functions.
+	// setup exit routine
 	ctx := context.Background()
-	defer goodbye.Exit(ctx, -1)
+	defer goodbye.Exit(ctx, 0)
 	goodbye.Notify(ctx)
 
 	subscribedCommands := swarfarm.SubscribedCommands()
@@ -68,6 +63,11 @@ func main() {
 
 		log.Info().Err(err).Msg("SWARFARM uploader plugin ended")
 	}, -1)
+
+	// Main Program
+	log.Info().
+		Str("proxyAddr", proxyAddress).
+		Msgf("Connecting SWARFARM uploader plugin to proxy %s", proxyAddress)
 
 	// initialize proxy consumer
 	lis, err := net.Listen("tcp", listenAddress)
