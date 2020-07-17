@@ -167,7 +167,7 @@ func writeSiegeMatchToFile(matchId *int64, data map[string]interface{}) error {
 	}
 
 	// write match data to profile file
-	filePath := fmt.Sprintf("%s/%s.json", GetOutputDirectory(), fileName)
+	filePath := fmt.Sprintf("%s/%s", GetOutputDirectory(), fileName)
 	err = ioutil.WriteFile(filePath, jsonBytes, 0664)
 	if err != nil {
 		log.Error().Err(err).
