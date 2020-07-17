@@ -108,7 +108,7 @@ func OnReceiveApiEvent(command, request, response string) error {
 		logType := int64(requestContent["log_type"].(float64))
 
 		logList := responseContent["log_list"].([]interface{})[0].(map[string]interface{})
-		guildInfoList := logList["guild_info_list"].(map[string]interface{})
+		guildInfoList := logList["guild_info_list"].([]interface{})[0].(map[string]interface{})
 		matchId := int64(guildInfoList["match_id"].(float64))
 
 		localLogger := localLogger.With().Int64("logType", logType).Interface("matchId", matchId).Logger()
