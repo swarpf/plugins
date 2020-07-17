@@ -131,7 +131,7 @@ func OnReceiveApiEvent(command, request, response string) error {
 			yellowHqId = 27
 		)
 
-		baseNumber := int64(responseContent["base_number"].(float64))
+		baseNumber := int64(requestContent["base_number"].(float64))
 		if baseNumber == redHqId || baseNumber == blueHqId || baseNumber == yellowHqId {
 			exportData["defense_list"] = responseContent
 			exportData["defense_list"].(map[string]interface{})["hq_base_number"] = requestContent["base_number"]
