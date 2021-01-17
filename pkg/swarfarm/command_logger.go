@@ -68,19 +68,21 @@ func UploadSwarfarmCommand(wizardId int64, command string, request, response map
 			detail = "no detail"
 		}
 
+		errlog := log.Error().
+			Str("command", command).
+			Int64("wizardId", wizardId).
+			Int("statusCode", resp.StatusCode()).
+			Str("detail", detail)
+
 		message := ""
 		if resp.StatusCode() == http.StatusUnauthorized {
 			message = fmt.Sprintf("SWARFARM data log upload failed - authentication error. detail: %s", detail)
 		} else {
 			message = fmt.Sprintf("SWARFARM data log upload failed - invalid status code. detail: %s", detail)
+			errlog.Str("request_json_bytes", string(jsonBytes))
 		}
 
-		log.Error().
-			Str("command", command).
-			Int64("wizardId", wizardId).
-			Int("statusCode", resp.StatusCode()).
-			Str("detail", detail).
-			Msg(message)
+		errlog.Msg(message)
 		return errors.New(message)
 	}
 
