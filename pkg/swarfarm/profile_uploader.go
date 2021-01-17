@@ -95,14 +95,19 @@ func UploadSwarfarmProfile(wizardId int64, command, apiResponse string) error {
 								Msg("SWARFARM profile import complete!")
 							return
 						}
+					} else {
+						log.Error().Err(err).
+							Str("jobId", jobId).
+							Msg("Error while deserializing SWARFARM profile upload check response")
 					}
-
-					log.Error().Err(err).
-						Str("jobId", jobId).
-						Msg("Error while deserializing SWARFARM profile upload check response")
 				}
 
-				time.Sleep(20 * time.Second)
+				const waitTime = 20 * time.Second
+
+				log.Info().
+					Str("jobId", jobId).
+					Msgf("Waiting %d seconds for SWARFARM profile import to complete...", waitTime/time.Second)
+				time.Sleep(waitTime)
 			}
 
 			log.Error().
