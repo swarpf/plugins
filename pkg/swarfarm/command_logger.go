@@ -25,7 +25,6 @@ func UploadSwarfarmCommand(wizardId int64, command string, request, response map
 		Int64("wizardId", wizardId).
 		Msg("Uploading command data to SWARFARM")
 
-
 	acceptedCommands := FetchAcceptedLoggerCommands()
 	cmdGroup := acceptedCommands[command]
 	payload := makeUploadPayload(cmdGroup, inputMap)
@@ -53,23 +52,42 @@ func UploadSwarfarmCommand(wizardId int64, command string, request, response map
 		log.Error().Err(err).
 			Str("command", command).
 			Int64("wizardId", wizardId).
-			Msg("SWARFARM upload failed")
-		return errors.New("SWARFARM upload failed")
+			Msg("SWARFARM data log upload failed")
+		return errors.New("SWARFARM data log upload failed")
 	}
 
 	if resp.StatusCode() != http.StatusOK {
+		response := map[string]interface{}{}
+		if err := json.Unmarshal(resp.Body(), &response); err != nil {
+			log.Error().Err(err).Msg("Failed to deserializie SWARFARM response")
+			return errors.New("error while deserializing SWARFARM response")
+		}
+
+		detail, ok := response["detail"].(string)
+		if !ok {
+			detail = "no detail"
+		}
+
+		message := ""
+		if resp.StatusCode() == http.StatusUnauthorized {
+			message = fmt.Sprintf("SWARFARM data log upload failed - authentication error. detail: %s", detail)
+		} else {
+			message = fmt.Sprintf("SWARFARM data log upload failed - invalid status code. detail: %s", detail)
+		}
+
 		log.Error().
 			Str("command", command).
 			Int64("wizardId", wizardId).
 			Int("statusCode", resp.StatusCode()).
-			Msg("SWARFARM upload failed. Invalid status code.")
-		return errors.New("SWARFARM upload failed - invalid status code")
+			Str("detail", detail).
+			Msg(message)
+		return errors.New(message)
 	}
 
 	log.Info().
 		Str("command", command).
 		Int64("wizardId", wizardId).
-		Msg("SWARFARM Upload successful")
+		Msg("SWARFARM data log upload successful")
 
 	return nil
 }
