@@ -101,7 +101,7 @@ func FetchAcceptedLoggerCommands() map[string]map[string][]string {
 	}
 
 	acceptedCommandCache = make(map[string]map[string][]string)
-	buildCacheFromUrl("data log commands", fmt.Sprintf("%s%s", apiUrl, "/data_logs"))
+	acceptedCommandCache = buildCacheFromUrl("data log commands", fmt.Sprintf("%s%s", apiUrl, "/data_logs"))
 
 	return acceptedCommandCache
 }
@@ -205,7 +205,7 @@ func FetchSyncCommands() map[string]map[string][]string {
 	}
 
 	syncCommandCache = make(map[string]map[string][]string)
-	buildCacheFromUrl("live sync commands", fmt.Sprintf("%s%s", apiUrl, "/profiles/accepted-commands/"))
+	syncCommandCache = buildCacheFromUrl("live sync commands", fmt.Sprintf("%s%s", apiUrl, "/profiles/accepted-commands/"))
 
 	return syncCommandCache
 }
