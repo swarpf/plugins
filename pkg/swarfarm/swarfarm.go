@@ -31,17 +31,61 @@ func OnReceiveApiEvent(command, request, response string) error {
 		log.Error().Err(err).Msg("Failed to deserializie SWARFARM response")
 		return errors.New("error while deserializing SWARFARM response")
 	}
-	
+
 	if isProfileUploadCommand(command) {
-		wizardInfo := responseContent["wizard_info"].(map[string]interface{})
-		wizardId := int64(wizardInfo["wizard_id"].(float64))
-		return UploadSwarfarmProfile(wizardId, command, response)
-	} else if isCommandLoggerCommand(command) {
-		wizardId := int64(requestContent["wizard_id"].(float64))
-		return UploadSwarfarmCommand(wizardId, command, requestContent, responseContent)
+		wizardId, ok := tryExtractWizardId(requestContent, responseContent)
+		if !ok {
+			log.Error().Msg("Failed to get wizardId from API request/response.")
+			return errors.New("failed to get wizardId from API request/response")
+		}
+
+		if err := UploadSwarfarmProfile(wizardId, command, response); err != nil {
+			log.Error().Err(err).Msg("Failed to upload SWARFARM profile.")
+		}
+	}
+
+	if isCommandLoggerCommand(command) {
+		wizardId, ok := tryExtractWizardId(requestContent, responseContent)
+		if !ok {
+			log.Error().Msg("Failed to get wizardId from API request/response.")
+			return errors.New("failed to get wizardId from API request/response")
+		}
+
+		if err := UploadSwarfarmCommand(wizardId, command, requestContent, responseContent); err != nil {
+			log.Error().Err(err).Msg("Failed to upload SWARFARM data log command.")
+		}
 	}
 
 	return errors.New("unknown command")
+}
+
+func tryExtractWizardId(request, response map[string]interface{}) (wizardId int64, ok bool) {
+	// try to extract wizardId using the request
+	if wizardIdField, found := request["wizard_id"]; found {
+		if wizardId, ok := wizardIdField.(float64); ok {
+			return int64(wizardId), true
+		}
+	}
+
+	// try to extract wizardId using the response directly
+	if wizardIdField, found := response["wizard_id"]; found {
+		if wizardId, ok := wizardIdField.(float64); ok {
+			return int64(wizardId), true
+		}
+	}
+
+	// try to extract wizardId using the response and the wizard_info field
+	if wizardInfoField, found := response["wizard_info"]; found {
+		if wizardInfo, ok := wizardInfoField.(map[string]interface{}); ok {
+			if wizardIdField, found := wizardInfo["wizard_id"]; found {
+				if wizardId, ok := wizardIdField.(float64); ok {
+					return int64(wizardId), true
+				}
+			}
+		}
+	}
+
+	return -1, false
 }
 
 func isCommandLoggerCommand(command string) bool {
