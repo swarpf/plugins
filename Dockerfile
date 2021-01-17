@@ -24,8 +24,8 @@ RUN apk --update --no-cache add \
 
 # Compile the cmd to a standalone binary
 WORKDIR /app
+
 COPY . .
-RUN go mod vendor
 RUN go build -ldflags "-s -w -extldflags '-static'" ./cmd/$PLUGINNAME
 
 
