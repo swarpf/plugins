@@ -57,6 +57,16 @@ func UploadSwarfarmCommand(wizardId int64, command string, request, response map
 	}
 
 	if resp.StatusCode() != http.StatusOK {
+		if resp.StatusCode() == http.StatusInternalServerError {
+			log.Error().
+				Str("command", command).
+				Int64("wizardId", wizardId).
+				Int("statusCode", resp.StatusCode()).
+				Str("sync_json_bytes", string(jsonBytes)).
+				Msg("A SWARFARM internal server error occured")
+			return errors.New("a SWARFARM internal server error occured")
+		}
+
 		response := map[string]interface{}{}
 		if err := json.Unmarshal(resp.Body(), &response); err != nil {
 			log.Error().Err(err).Msg("Failed to deserializie SWARFARM response")
@@ -159,6 +169,16 @@ func UploadSwarfarmLiveSyncCommand(wizardId int64, command string, request, resp
 	}
 
 	if resp.StatusCode() != http.StatusOK {
+		if resp.StatusCode() == http.StatusInternalServerError {
+			log.Error().
+				Str("command", command).
+				Int64("wizardId", wizardId).
+				Int("statusCode", resp.StatusCode()).
+				Str("sync_json_bytes", string(jsonBytes)).
+				Msg("A SWARFARM internal server error occured")
+			return errors.New("a SWARFARM internal server error occured")
+		}
+
 		response := map[string]interface{}{}
 		if err := json.Unmarshal(resp.Body(), &response); err != nil {
 			log.Error().Err(err).Str("body", string(resp.Body())).
@@ -171,19 +191,21 @@ func UploadSwarfarmLiveSyncCommand(wizardId int64, command string, request, resp
 			detail = "no detail"
 		}
 
+		errlog := log.Error().
+			Str("command", command).
+			Int64("wizardId", wizardId).
+			Int("statusCode", resp.StatusCode()).
+			Str("detail", detail)
+
 		message := ""
 		if resp.StatusCode() == http.StatusUnauthorized {
 			message = fmt.Sprintf("SWARFARM live sync upload failed - authentication error. detail: %s", detail)
 		} else {
 			message = fmt.Sprintf("SWARFARM live sync upload failed - invalid status code. detail: %s", detail)
+			errlog.Str("request_json_bytes", string(jsonBytes))
 		}
 
-		log.Error().
-			Str("command", command).
-			Int64("wizardId", wizardId).
-			Int("statusCode", resp.StatusCode()).
-			Str("detail", detail).
-			Msg(message)
+		errlog.Msg(message)
 		return errors.New(message)
 	}
 
