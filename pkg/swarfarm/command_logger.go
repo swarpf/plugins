@@ -3,6 +3,7 @@ package swarfarm
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"sort"
 	"strconv"
@@ -98,32 +99,49 @@ func UploadSwarfarmCommand(wizardId int64, command string, request, response map
 var acceptedCommandCache map[string]map[string][]string
 
 func FetchAcceptedLoggerCommands() map[string]map[string][]string {
-	log.Debug().Msg("Retrieving list of accepted log types from SWARFARM...")
-
 	if acceptedCommandCache != nil {
 		log.Debug().Msg("Using cached version of accepted log types")
 		return acceptedCommandCache
 	}
 
 	acceptedCommandCache = make(map[string]map[string][]string)
+	buildCacheFromUrl("data log commands", fmt.Sprintf("%s%s", baseUrl, "/data/log/accepted_commands/"))
+
+	return acceptedCommandCache
+}
+
+func buildCacheFromUrl(cacheTag, url string) map[string]map[string][]string {
+	log.Debug().Msgf("Fetching %s from SWARFARM...", cacheTag)
+
+	commandCache := make(map[string]map[string][]string)
 
 	rclient := resty.New()
-	resp, err := rclient.R().Get(baseUrl + "/data/log/accepted_commands/")
+	resp, err := rclient.R().Get(url)
 	if err != nil {
-		log.Error().Err(err).Msg("Unable to retrieve accepted log types. SWARFARM logging is disabled.")
-		return acceptedCommandCache
+		log.Error().Err(err).Msgf("Unable to retrieve %s. SWARFARM logging is disabled.", cacheTag)
+		return commandCache
+	}
+
+	if resp.StatusCode() == http.StatusNotFound {
+		log.Error().
+			Str("url", url).
+			Msgf("Unable to retrieve %s. Endpoint not found. SWARFARM logging is disabled.", cacheTag)
+		return commandCache
 	}
 
 	if resp.StatusCode() != http.StatusOK {
-		log.Error().Err(err).Msg("Unable to retrieve accepted log types. Invalid status code. SWARFARM logging is disabled.")
-		return acceptedCommandCache
+		log.Error().
+			Int("status_code", resp.StatusCode()).
+			Str("status", resp.Status()).
+			Msgf("Unable to retrieve %s. Invalid status code. SWARFARM logging is disabled.", cacheTag)
+		return commandCache
 	}
 
 	content := map[string]interface{}{}
 	err = json.Unmarshal(resp.Body(), &content)
 	if err != nil {
-		log.Error().Err(err).Msg("Error while deserializing accepted SWARFARM commands.")
-		return acceptedCommandCache
+		log.Error().Err(err).Msgf("Error while deserializing SWARFARM %s.", cacheTag)
+		return commandCache
 	}
 
 	for k, v := range content {
@@ -141,17 +159,19 @@ func FetchAcceptedLoggerCommands() map[string]map[string][]string {
 			}
 		}
 
-		acceptedCommandCache[k] = cmd
+		commandCache[k] = cmd
 	}
 
-	keys := make([]string, 0, len(acceptedCommandCache))
-	for k := range acceptedCommandCache {
+	keys := make([]string, 0, len(commandCache))
+	for k := range commandCache {
 		keys = append(keys, k)
 	}
 	sort.Strings(keys)
 
-	log.Info().Strs("accepted_commands", keys).
-		Msg("Successfully retrieded list of SWARFARM accepted commands")
+	log.Info().
+		Str("cache_tag", cacheTag).
+		Strs("commands", keys).
+		Msgf("Successfully retrieved %s from SWARFARM.", cacheTag)
 
-	return acceptedCommandCache
+	return commandCache
 }
