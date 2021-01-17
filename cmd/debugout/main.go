@@ -37,7 +37,7 @@ func main() {
 	listenAddress := viper.GetString("listen_addr")
 
 	// setup logging
-	zerolog.SetGlobalLevel(zerolog.InfoLevel)
+	zerolog.SetGlobalLevel(zerolog.DebugLevel)
 	if viper.GetBool("development") {
 		zerolog.SetGlobalLevel(zerolog.TraceLevel)
 		log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stdout, TimeFormat: time.RFC3339})
