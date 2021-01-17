@@ -161,7 +161,8 @@ func UploadSwarfarmLiveSyncCommand(wizardId int64, command string, request, resp
 	if resp.StatusCode() != http.StatusOK {
 		response := map[string]interface{}{}
 		if err := json.Unmarshal(resp.Body(), &response); err != nil {
-			log.Error().Err(err).Msg("Failed to deserializie SWARFARM response")
+			log.Error().Err(err).Str("body", string(resp.Body())).
+				Msg("Failed to deserializie SWARFARM response")
 			return errors.New("error while deserializing SWARFARM response")
 		}
 
