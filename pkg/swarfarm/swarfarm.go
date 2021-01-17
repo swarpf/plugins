@@ -66,7 +66,15 @@ func OnReceiveApiEvent(command, request, response string) error {
 		}
 
 		if err := UploadSwarfarmCommand(wizardId, command, requestContent, responseContent); err != nil {
-			log.Error().Err(err).Msg("Failed to upload SWARFARM data log command.")
+			log.Error().Err(err).
+				Str("swarfarmLogType", "data_log").
+				Msg("Failed to upload SWARFARM data log command.")
+
+			log.Debug().
+				Str("swarfarmLogType", "data_log").
+				Str("request", request).
+				Str("response", response).
+				Msg("Details of the failed data log command")
 		}
 	}
 
@@ -78,7 +86,15 @@ func OnReceiveApiEvent(command, request, response string) error {
 		}
 
 		if err := UploadSwarfarmLiveSyncCommand(wizardId, command, requestContent, responseContent); err != nil {
-			log.Error().Err(err).Msg("Failed to upload SWARFARM profile sync command.")
+			log.Error().Err(err).
+				Str("swarfarmLogType", "profile_sync").
+				Msg("Failed to upload SWARFARM profile sync command.")
+
+			log.Debug().
+				Str("swarfarmLogType", "profile_sync").
+				Str("request", request).
+				Str("response", response).
+				Msg("Details of the failed sync command")
 		}
 	}
 

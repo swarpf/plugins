@@ -21,6 +21,7 @@ func UploadSwarfarmCommand(wizardId int64, command string, request, response map
 	inputMap["response"] = response
 
 	log.Debug().
+		Str("swarfarmLogType", "data_log").
 		Str("command", command).
 		Int64("wizardId", wizardId).
 		Msg("Uploading command data to SWARFARM")
@@ -36,6 +37,7 @@ func UploadSwarfarmCommand(wizardId int64, command string, request, response map
 	jsonBytes, err := json.Marshal(swarfarmCommandContent)
 	if err != nil {
 		log.Error().Err(err).
+			Str("swarfarmLogType", "data_log").
 			Str("command", command).
 			Int64("wizardId", wizardId).
 			Msg("Error on command serialization")
@@ -50,6 +52,7 @@ func UploadSwarfarmCommand(wizardId int64, command string, request, response map
 
 	if err != nil {
 		log.Error().Err(err).
+			Str("swarfarmLogType", "data_log").
 			Str("command", command).
 			Int64("wizardId", wizardId).
 			Msg("SWARFARM data log upload failed")
@@ -59,17 +62,20 @@ func UploadSwarfarmCommand(wizardId int64, command string, request, response map
 	if resp.StatusCode() != http.StatusOK {
 		if resp.StatusCode() == http.StatusInternalServerError {
 			log.Error().
+				Str("swarfarmLogType", "data_log").
 				Str("command", command).
 				Int64("wizardId", wizardId).
 				Int("statusCode", resp.StatusCode()).
-				Str("sync_json_bytes", string(jsonBytes)).
+				Str("syncJsonBytes", string(jsonBytes)).
 				Msg("A SWARFARM internal server error occured")
 			return errors.New("a SWARFARM internal server error occured")
 		}
 
 		response := map[string]interface{}{}
 		if err := json.Unmarshal(resp.Body(), &response); err != nil {
-			log.Error().Err(err).Msg("Failed to deserializie SWARFARM response")
+			log.Error().Err(err).
+				Str("swarfarmLogType", "data_log").
+				Msg("Failed to deserializie SWARFARM response")
 			return errors.New("error while deserializing SWARFARM response")
 		}
 
@@ -79,6 +85,7 @@ func UploadSwarfarmCommand(wizardId int64, command string, request, response map
 		}
 
 		errlog := log.Error().
+			Str("swarfarmLogType", "data_log").
 			Str("command", command).
 			Int64("wizardId", wizardId).
 			Int("statusCode", resp.StatusCode()).
@@ -97,6 +104,7 @@ func UploadSwarfarmCommand(wizardId int64, command string, request, response map
 	}
 
 	log.Info().
+		Str("swarfarmLogType", "data_log").
 		Str("command", command).
 		Int64("wizardId", wizardId).
 		Msg("SWARFARM data log upload successful")
@@ -133,6 +141,7 @@ func UploadSwarfarmLiveSyncCommand(wizardId int64, command string, request, resp
 	inputMap["response"] = response
 
 	log.Debug().
+		Str("swarfarmLogType", "profile_sync").
 		Str("command", command).
 		Int64("wizardId", wizardId).
 		Msg("Uploading live sync data to SWARFARM")
@@ -148,6 +157,7 @@ func UploadSwarfarmLiveSyncCommand(wizardId int64, command string, request, resp
 	jsonBytes, err := json.Marshal(swarfarmSyncContent)
 	if err != nil {
 		log.Error().Err(err).
+			Str("swarfarmLogType", "profile_sync").
 			Str("command", command).
 			Int64("wizardId", wizardId).
 			Msg("Error on command serialization")
@@ -162,6 +172,7 @@ func UploadSwarfarmLiveSyncCommand(wizardId int64, command string, request, resp
 
 	if err != nil {
 		log.Error().Err(err).
+			Str("swarfarmLogType", "profile_sync").
 			Str("command", command).
 			Int64("wizardId", wizardId).
 			Msg("SWARFARM live sync upload failed")
@@ -171,10 +182,11 @@ func UploadSwarfarmLiveSyncCommand(wizardId int64, command string, request, resp
 	if resp.StatusCode() != http.StatusOK {
 		if resp.StatusCode() == http.StatusInternalServerError {
 			log.Error().
+				Str("swarfarmLogType", "profile_sync").
 				Str("command", command).
 				Int64("wizardId", wizardId).
 				Int("statusCode", resp.StatusCode()).
-				Str("sync_json_bytes", string(jsonBytes)).
+				Str("jsonBytes", string(jsonBytes)).
 				Msg("A SWARFARM internal server error occured")
 			return errors.New("a SWARFARM internal server error occured")
 		}
@@ -192,6 +204,7 @@ func UploadSwarfarmLiveSyncCommand(wizardId int64, command string, request, resp
 		}
 
 		errlog := log.Error().
+			Str("swarfarmLogType", "profile_sync").
 			Str("command", command).
 			Int64("wizardId", wizardId).
 			Int("statusCode", resp.StatusCode()).
@@ -210,6 +223,7 @@ func UploadSwarfarmLiveSyncCommand(wizardId int64, command string, request, resp
 	}
 
 	log.Info().
+		Str("swarfarmLogType", "profile_sync").
 		Str("command", command).
 		Int64("wizardId", wizardId).
 		Msg("SWARFARM live sync upload successful")
