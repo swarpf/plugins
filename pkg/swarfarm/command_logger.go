@@ -150,6 +150,13 @@ func UploadSwarfarmLiveSyncCommand(wizardId int64, command string, request, resp
 	cmdGroup := syncCommands[command]
 	payload := makeUploadPayload(cmdGroup, inputMap)
 
+	// NOTE: this is a workaround for HubUserLogin. it is needed because the server schema does not list the fields
+	// necessary for the command to be valid.
+	if command == "HubUserLogin" {
+		payload["request"] = make(map[string]interface{})
+		payload["response"] = response
+	}
+
 	// handle response fields
 	swarfarmSyncContent := make(map[string]interface{})
 	swarfarmSyncContent["data"] = payload
