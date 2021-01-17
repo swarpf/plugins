@@ -14,6 +14,10 @@ import (
 )
 
 func UploadSwarfarmCommand(wizardId int64, command string, request, response map[string]interface{}) error {
+	if !DataLogEnabled {
+		return nil
+	}
+
 	apiToken, _ := FindToken(strconv.FormatInt(wizardId, 10))
 
 	inputMap := make(map[string]map[string]interface{})
@@ -115,6 +119,10 @@ func UploadSwarfarmCommand(wizardId int64, command string, request, response map
 var acceptedCommandCache map[string]map[string][]string
 
 func FetchAcceptedLoggerCommands() map[string]map[string][]string {
+	if !DataLogEnabled {
+		return make(map[string]map[string][]string)
+	}
+
 	if acceptedCommandCache != nil {
 		log.Debug().Msg("Using cached version of accepted log types")
 		return acceptedCommandCache

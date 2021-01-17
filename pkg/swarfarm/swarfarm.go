@@ -7,14 +7,17 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+var DataLogEnabled = true
 var LiveSyncEnabled = false
 
 func SubscribedCommands() []string {
 	commands := make([]string, 0)
 
-	for k := range FetchAcceptedLoggerCommands() {
-		if !contains(commands, k) {
-			commands = append(commands, k)
+	if DataLogEnabled {
+		for k := range FetchAcceptedLoggerCommands() {
+			if !contains(commands, k) {
+				commands = append(commands, k)
+			}
 		}
 	}
 
@@ -46,7 +49,7 @@ func OnReceiveApiEvent(command, request, response string) error {
 		return errors.New("error while deserializing SWARFARM response")
 	}
 
-	if isCommandLoggerCommand(command) {
+	if DataLogEnabled && isCommandLoggerCommand(command) {
 		wizardId, ok := tryExtractWizardId(requestContent, responseContent)
 		if !ok {
 			log.Error().Msg("Failed to get wizardId from API request/response.")
