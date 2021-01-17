@@ -30,7 +30,7 @@ func SubscribedCommands() []string {
 }
 
 func OnReceiveApiEvent(command, request, response string) error {
-	if !isProfileUploadCommand(command) && !isCommandLoggerCommand(command) {
+	if !isProfileUploadCommand(command) && !isCommandLoggerCommand(command) && !isProfileSyncCommand(command) {
 		return nil
 	}
 
