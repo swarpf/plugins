@@ -25,36 +25,14 @@ func UploadSwarfarmCommand(wizardId int64, command string, request, response map
 		Int64("wizardId", wizardId).
 		Msg("Uploading command data to SWARFARM")
 
-	swarfarmCommand := make(map[string]map[string]interface{})
 
 	acceptedCommands := FetchAcceptedLoggerCommands()
 	cmdGroup := acceptedCommands[command]
-	for direction := range cmdGroup {
-		swarfarmCommand[direction] = make(map[string]interface{})
-	}
-
-	// handle request fields
-	categories := []string{"request", "response"}
-	for _, cat := range categories {
-		requestCmds, ok := cmdGroup[cat]
-		if !ok {
-			continue
-		}
-
-		for _, c := range requestCmds {
-			e, ok := inputMap[cat][c]
-
-			if ok {
-				swarfarmCommand[cat][c] = e
-			} else {
-				swarfarmCommand[cat][c] = nil
-			}
-		}
-	}
+	payload := makeUploadPayload(cmdGroup, inputMap)
 
 	// handle response fields
 	swarfarmCommandContent := make(map[string]interface{})
-	swarfarmCommandContent["data"] = swarfarmCommand
+	swarfarmCommandContent["data"] = payload
 
 	jsonBytes, err := json.Marshal(swarfarmCommandContent)
 	if err != nil {
@@ -174,4 +152,33 @@ func buildCacheFromUrl(cacheTag, url string) map[string]map[string][]string {
 		Msgf("Successfully retrieved %s from SWARFARM.", cacheTag)
 
 	return commandCache
+}
+
+func makeUploadPayload(cmdGroup map[string][]string, inputMap map[string]map[string]interface{}) map[string]map[string]interface{} {
+	payload := make(map[string]map[string]interface{})
+
+	for direction := range cmdGroup {
+		payload[direction] = make(map[string]interface{})
+	}
+
+	// handle request fields
+	categories := []string{"request", "response"}
+	for _, cat := range categories {
+		requestCmds, ok := cmdGroup[cat]
+		if !ok {
+			continue
+		}
+
+		for _, c := range requestCmds {
+			e, ok := inputMap[cat][c]
+
+			if ok {
+				payload[cat][c] = e
+			} else {
+				payload[cat][c] = nil
+			}
+		}
+	}
+
+	return payload
 }
