@@ -106,6 +106,110 @@ func FetchAcceptedLoggerCommands() map[string]map[string][]string {
 	return acceptedCommandCache
 }
 
+func UploadSwarfarmLiveSyncCommand(wizardId int64, command string, request, response map[string]interface{}) error {
+	if !LiveSyncEnabled {
+		return nil
+	}
+
+	apiToken, _ := FindToken(strconv.FormatInt(wizardId, 10))
+	if apiToken == "" {
+		return nil
+	}
+
+	inputMap := make(map[string]map[string]interface{})
+	inputMap["request"] = request
+	inputMap["response"] = response
+
+	log.Debug().
+		Str("command", command).
+		Int64("wizardId", wizardId).
+		Msg("Uploading live sync data to SWARFARM")
+
+	syncCommands := FetchSyncCommands()
+	cmdGroup := syncCommands[command]
+	payload := makeUploadPayload(cmdGroup, inputMap)
+
+	// handle response fields
+	swarfarmSyncContent := make(map[string]interface{})
+	swarfarmSyncContent["data"] = payload
+
+	jsonBytes, err := json.Marshal(swarfarmSyncContent)
+	if err != nil {
+		log.Error().Err(err).
+			Str("command", command).
+			Int64("wizardId", wizardId).
+			Msg("Error on command serialization")
+		return errors.New("error while serializing a command")
+	}
+
+	rclient := makeAuthorizedClient(apiToken)
+	resp, err := rclient.R().
+		SetHeader("Content-Type", "application/json").
+		SetBody(jsonBytes).
+		Post(baseUrl + "/profiles/sync/")
+
+	if err != nil {
+		log.Error().Err(err).
+			Str("command", command).
+			Int64("wizardId", wizardId).
+			Msg("SWARFARM live sync upload failed")
+		return errors.New("SWARFARM live sync upload failed")
+	}
+
+	if resp.StatusCode() != http.StatusOK {
+		response := map[string]interface{}{}
+		if err := json.Unmarshal(resp.Body(), &response); err != nil {
+			log.Error().Err(err).Msg("Failed to deserializie SWARFARM response")
+			return errors.New("error while deserializing SWARFARM response")
+		}
+
+		detail, ok := response["detail"].(string)
+		if !ok {
+			detail = "no detail"
+		}
+
+		message := ""
+		if resp.StatusCode() == http.StatusUnauthorized {
+			message = fmt.Sprintf("SWARFARM live sync upload failed - authentication error. detail: %s", detail)
+		} else {
+			message = fmt.Sprintf("SWARFARM live sync upload failed - invalid status code. detail: %s", detail)
+		}
+
+		log.Error().
+			Str("command", command).
+			Int64("wizardId", wizardId).
+			Int("statusCode", resp.StatusCode()).
+			Str("detail", detail).
+			Msg(message)
+		return errors.New(message)
+	}
+
+	log.Info().
+		Str("command", command).
+		Int64("wizardId", wizardId).
+		Msg("SWARFARM live sync upload successful")
+
+	return nil
+}
+
+var syncCommandCache map[string]map[string][]string
+
+func FetchSyncCommands() map[string]map[string][]string {
+	if !LiveSyncEnabled {
+		return make(map[string]map[string][]string)
+	}
+
+	if syncCommandCache != nil {
+		log.Debug().Msg("Using cached version of live sync commands")
+		return syncCommandCache
+	}
+
+	syncCommandCache = make(map[string]map[string][]string)
+	buildCacheFromUrl("live sync commands", fmt.Sprintf("%s%s", baseUrl, "/profiles/accepted-commands/"))
+
+	return syncCommandCache
+}
+
 func buildCacheFromUrl(cacheTag, url string) map[string]map[string][]string {
 	log.Debug().Msgf("Fetching %s from SWARFARM...", cacheTag)
 

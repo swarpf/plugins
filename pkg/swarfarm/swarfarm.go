@@ -7,12 +7,22 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+var LiveSyncEnabled = false
+
 func SubscribedCommands() []string {
 	commands := GetProfileUploadCommands()
 
 	for k := range FetchAcceptedLoggerCommands() {
 		if !contains(commands, k) {
 			commands = append(commands, k)
+		}
+	}
+
+	if LiveSyncEnabled {
+		for k := range FetchSyncCommands() {
+			if !contains(commands, k) {
+				commands = append(commands, k)
+			}
 		}
 	}
 
@@ -60,6 +70,18 @@ func OnReceiveApiEvent(command, request, response string) error {
 		}
 	}
 
+	if LiveSyncEnabled && isProfileSyncCommand(command) {
+		wizardId, ok := tryExtractWizardId(requestContent, responseContent)
+		if !ok {
+			log.Error().Msg("Failed to get wizardId from API request/response.")
+			return errors.New("failed to get wizardId from API request/response")
+		}
+
+		if err := UploadSwarfarmLiveSyncCommand(wizardId, command, requestContent, responseContent); err != nil {
+			log.Error().Err(err).Msg("Failed to upload SWARFARM profile sync command.")
+		}
+	}
+
 	return errors.New("unknown command")
 }
 
@@ -104,6 +126,15 @@ func isCommandLoggerCommand(command string) bool {
 func isProfileUploadCommand(command string) bool {
 	for _, b := range GetProfileUploadCommands() {
 		if b == command {
+			return true
+		}
+	}
+	return false
+}
+
+func isProfileSyncCommand(command string) bool {
+	for k := range FetchSyncCommands() {
+		if k == command {
 			return true
 		}
 	}
