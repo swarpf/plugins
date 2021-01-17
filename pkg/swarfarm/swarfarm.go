@@ -10,7 +10,7 @@ import (
 var LiveSyncEnabled = false
 
 func SubscribedCommands() []string {
-	commands := GetProfileUploadCommands()
+	commands := make([]string, 0)
 
 	for k := range FetchAcceptedLoggerCommands() {
 		if !contains(commands, k) {
@@ -30,7 +30,7 @@ func SubscribedCommands() []string {
 }
 
 func OnReceiveApiEvent(command, request, response string) error {
-	if !isProfileUploadCommand(command) && !isCommandLoggerCommand(command) && !isProfileSyncCommand(command) {
+	if !isCommandLoggerCommand(command) && !isProfileSyncCommand(command) {
 		return nil
 	}
 
@@ -44,18 +44,6 @@ func OnReceiveApiEvent(command, request, response string) error {
 	if err := json.Unmarshal([]byte(response), &responseContent); err != nil {
 		log.Error().Err(err).Msg("Failed to deserializie SWARFARM response")
 		return errors.New("error while deserializing SWARFARM response")
-	}
-
-	if isProfileUploadCommand(command) {
-		wizardId, ok := tryExtractWizardId(requestContent, responseContent)
-		if !ok {
-			log.Error().Msg("Failed to get wizardId from API request/response.")
-			return errors.New("failed to get wizardId from API request/response")
-		}
-
-		if err := UploadSwarfarmProfile(wizardId, command, response); err != nil {
-			log.Error().Err(err).Msg("Failed to upload SWARFARM profile.")
-		}
 	}
 
 	if isCommandLoggerCommand(command) {
@@ -133,15 +121,6 @@ func tryExtractWizardId(request, response map[string]interface{}) (wizardId int6
 func isCommandLoggerCommand(command string) bool {
 	for k := range FetchAcceptedLoggerCommands() {
 		if k == command {
-			return true
-		}
-	}
-	return false
-}
-
-func isProfileUploadCommand(command string) bool {
-	for _, b := range GetProfileUploadCommands() {
-		if b == command {
 			return true
 		}
 	}
