@@ -46,7 +46,7 @@ func UploadSwarfarmCommand(wizardId int64, command string, request, response map
 	resp, err := rclient.R().
 		SetHeader("Content-Type", "application/json").
 		SetBody(jsonBytes).
-		Post(baseUrl + "/data/log/upload/")
+		Post(apiUrl + "/data_logs/")
 
 	if err != nil {
 		log.Error().Err(err).
@@ -101,7 +101,7 @@ func FetchAcceptedLoggerCommands() map[string]map[string][]string {
 	}
 
 	acceptedCommandCache = make(map[string]map[string][]string)
-	buildCacheFromUrl("data log commands", fmt.Sprintf("%s%s", baseUrl, "/data/log/accepted_commands/"))
+	buildCacheFromUrl("data log commands", fmt.Sprintf("%s%s", apiUrl, "/data_logs"))
 
 	return acceptedCommandCache
 }
@@ -146,7 +146,7 @@ func UploadSwarfarmLiveSyncCommand(wizardId int64, command string, request, resp
 	resp, err := rclient.R().
 		SetHeader("Content-Type", "application/json").
 		SetBody(jsonBytes).
-		Post(baseUrl + "/profiles/sync/")
+		Post(apiUrl + "/profiles/sync/")
 
 	if err != nil {
 		log.Error().Err(err).
@@ -205,7 +205,7 @@ func FetchSyncCommands() map[string]map[string][]string {
 	}
 
 	syncCommandCache = make(map[string]map[string][]string)
-	buildCacheFromUrl("live sync commands", fmt.Sprintf("%s%s", baseUrl, "/profiles/accepted-commands/"))
+	buildCacheFromUrl("live sync commands", fmt.Sprintf("%s%s", apiUrl, "/profiles/accepted-commands/"))
 
 	return syncCommandCache
 }
