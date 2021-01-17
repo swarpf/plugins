@@ -9,9 +9,13 @@ import (
 
 func SubscribedCommands() []string {
 	commands := GetProfileUploadCommands()
+
 	for k := range FetchAcceptedLoggerCommands() {
-		commands = append(commands, k)
+		if !contains(commands, k) {
+			commands = append(commands, k)
+		}
 	}
+
 	return commands
 }
 
@@ -100,6 +104,15 @@ func isCommandLoggerCommand(command string) bool {
 func isProfileUploadCommand(command string) bool {
 	for _, b := range GetProfileUploadCommands() {
 		if b == command {
+			return true
+		}
+	}
+	return false
+}
+
+func contains(s []string, e string) bool {
+	for _, a := range s {
+		if a == e {
 			return true
 		}
 	}
