@@ -282,25 +282,22 @@ func buildCacheFromUrl(cacheTag, url string) map[string]map[string][]string {
 func makeUploadPayload(cmdGroup map[string][]string, inputMap map[string]map[string]interface{}) map[string]map[string]interface{} {
 	payload := make(map[string]map[string]interface{})
 
-	for direction := range cmdGroup {
+	directions := []string{"request", "response"}
+	for _, direction := range directions {
 		payload[direction] = make(map[string]interface{})
-	}
 
-	// handle request fields
-	categories := []string{"request", "response"}
-	for _, cat := range categories {
-		requestCmds, ok := cmdGroup[cat]
+		requestCmds, ok := cmdGroup[direction]
 		if !ok {
 			continue
 		}
 
 		for _, c := range requestCmds {
-			e, ok := inputMap[cat][c]
+			e, ok := inputMap[direction][c]
 
 			if ok {
-				payload[cat][c] = e
+				payload[direction][c] = e
 			} else {
-				payload[cat][c] = nil
+				payload[direction][c] = nil
 			}
 		}
 	}
