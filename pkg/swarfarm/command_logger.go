@@ -154,6 +154,7 @@ func UploadSwarfarmLiveSyncCommand(wizardId int64, command string, request, resp
 	// necessary for the command to be valid.
 	if command == "HubUserLogin" {
 		payload["request"] = make(map[string]interface{})
+		payload["request"]["command"] = command
 		payload["response"] = response
 	}
 
